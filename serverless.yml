@@ -22,11 +22,72 @@ provider:
   #
   #environment:
   #  sampleEnvVar: ${env:SAMPLE_ENV_VAR}
+  # These environment variables are made available to our functions
+  # under process.env.
+  environment:
+    stripeSecretKey: ${env:STRIPE_SECRET_KEY}
+    tableName: ${env.tableName}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItemHere
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:ap-southeast-1:*:*"
 
 functions:
-  hello:
-    handler: handler.hello
+  create:
+    handler: create.main
     events:
       - http:
-          path: hello
+          path: notes
+          method: post
+          cors: true
+          authorizer: aws_iam
+  get:
+    handler: get.main
+    events:
+      - http:
+          path: notes/{id}
           method: get
+          cors: true
+          authorizer: aws_iam
+  list:
+    handler: list.main
+    events:
+      - http:
+          path: notes
+          method: get
+          cors: true
+          authorizer: aws_iam 
+  update:
+    handler: update.main
+    events:
+      - http:
+          path: notes/{id}
+          method: put
+          cors: true
+          authorizer: aws_iam 
+  delete:
+    handler: delete.main
+    events:
+      - http:
+          path: notes/{id}
+          method: delete
+          cors: true
+          authorizer: aws_iam 
+
+resources:
+  - ${file(resources/api-gateway-errors.yml)}
+  
+
+
+# PoolId : ap-southeast-1_oRzo8T8fM
+# PoolArn : arn:aws:cognito-idp:ap-southeast-1:266607025884:userpool/ap-southeast-1_oRzo8T8fM
+# App CLient Id : 3omeunbdavluqo9tual19b0mku
+# Domain Name: https://notes-app-12345.auth.ap-southeast-1.amazoncognito.com
